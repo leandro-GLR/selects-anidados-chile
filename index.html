@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selects Anidados</title>
+</head>
+
+<body>
+  <h1>Selects Anidados de Chile por Leandro Marcelo</h1>
+  <label for="select-region">Region</label>
+  <select name="region" id="select-region">
+    <option value="">Elige una Region</option>
+  </select>
+  <p></p>
+  <label for="select-province">Provincias</label>
+  <select name="province" id="select-province">
+    <option value="">Elige un Provincia</option>
+  </select>
+  <p></p>
+  <label for="select-commune">Comunas</label>
+  <select name="commune" id="select-commune">
+    <option value="">Elige una Comuna</option>
+  </select>
+  <p></p>
+  <script>
+    const d = document;
+    $selectRegion = d.getElementById(`select-region`);
+    $selectProvince = d.getElementById(`select-province`);
+    $selectCommune = d.getElementById(`select-commune`);
+
+    let chileRegions = [];
+    let provincesByRegionSelected = [];
+
+    function loadRegions() {
+        fetch("https://apis.digital.gob.cl/dpa/regiones")
+        .then((res) => res.ok ? res.json() : Promise.reject(res))
+        .then((regions) => {
+            console.log(regions);
+            chileRegions = regions
+            let $options = `<option value="Elige un Estado"></option>`;
+            regions.forEach((region) => $options += `<option value="${region.nombre}">${region.nombre}</option>`);
+            $selectRegion.innerHTML = $options;
+        })
+        .catch((err) => {
+            let message = err.statusText || "An error ocurred in loadRegions function";
+            $selectRegion.nextElementSibling.innerHTML = `Error ${err.status}: ${message}`;
+        })  
+    };
+
+   
+    function loadProvinces(regionSelected) {
+        const regionFound = chileRegions.find((region) => region.nombre === regionSelected)
+        fetch(`https://apis.digital.gob.cl/dpa/regiones/${regionFound.codigo}/provincias`)
+        .then((res) => res.ok ? res.json() : Promise.reject(res))
+        .then((provinces) => {
+            console.log(provinces);
+            provincesByRegionSelected = provinces
+            let $options = `<option value="Elige un Provincia"></option>`;
+            provinces.forEach((province) => $options += `<option value="${province.nombre}">${province.nombre}</option>`);
+            $selectProvince.innerHTML = $options;
+        })
+        .catch((err) => {
+            let message = err.statusText || "An error ocurred in loadProvinces";
+            $selectProvince.nextElementSibling.innerHTML = `Error ${err.status}: ${message}`;
+        }) 
+    };
+
+    function loadCommunes(provinceSelected) {
+        const provinceFound = provincesByRegionSelected.find((province) => province.nombre === provinceSelected)
+        fetch(`https://apis.digital.gob.cl/dpa/provincias/${provinceFound.codigo}/comunas`)
+        .then((res) => res.ok ? res.json() : Promise.reject(res))
+        .then((communes) => {
+            console.log(communes);
+            let $options = `<option value="Elige una Comuna"></option>`;
+            communes.forEach((commune) => $options += `<option value="${commune.nombre}">${commune.nombre}</option>`);
+            $selectCommune.innerHTML = $options;
+        })
+        .catch((err) => {
+            let message = err.statusText || "An error ocurred";
+            $selectCommune.nextElementSibling.innerHTML = `Error ${err.status}: ${message}`;
+        }) 
+    };
+
+    d.addEventListener("DOMContentLoaded", loadRegions);
+
+    $selectRegion.addEventListener("change", e => loadProvinces(e.target.value));
+    $selectProvince.addEventListener("change", e => loadCommunes(e.target.value));
+
+
+  
+  </script>
+</body>
+
+</html>
